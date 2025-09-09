@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Student Planner — Focus, Plan & Review</title>
+    <meta name="description" content="A simple, friendly student planner with timer and guided study advice." />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>
+        /* Minimal baseline styles (keep or replace later) */
+        :root {
+            --bg: #0f172a;
+            --card: #111827;
+            --muted: #94a3b8;
+            --ink: #e5e7eb;
+            --accent: #22c55e;
+            --accent-2: #38bdf8;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: linear-gradient(180deg, #0b1220, var(--bg));
+            color: var(--ink);
+            line-height: 1.45;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(17, 24, 39, .7);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid #1f2937;
+            z-index: 10;
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            margin: .25rem 0;
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: .95rem;
+        }
+
+        nav[aria-label="Primary"] {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            padding: .5rem 0 1rem;
+        }
+
+        .tab {
+            appearance: none;
+            background: #0b1020;
+            color: var(--ink);
+            border: 1px solid #1f2937;
+            padding: .55rem .8rem;
+            border-radius: .75rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .tab[aria-current="page"],
+        .tab:hover {
+            border-color: var(--accent-2);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, .15) inset;
+        }
+
+        main {
+            padding: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 900px) {
+            .grid {
+                grid-template-columns: 1.1fr .9fr;
+            }
+        }
+
+        .card {
+            background: linear-gradient(180deg, #0e1426, var(--card));
+            border: 1px solid #1f2937;
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+        }
+
+        .card h2 {
+            margin: 0 0 .75rem;
+            font-size: 1.05rem;
+        }
+
+        .row {
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 640px) {
+            .row-2 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .row-3 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        label {
+            font-weight: 600;
+            font-size: .9rem;
+            color: var(--ink);
+            display: block;
+            margin-bottom: .25rem;
+        }
+
+        input,
+        select,
+        textarea,
+        button {
+            width: 100%;
+            padding: .7rem .8rem;
+            border-radius: .7rem;
+            border: 1px solid #243044;
+            background: #0b1020;
+            color: var(--ink);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border-color: #14532d;
+        }
+
+        .btn-secondary {
+            background: #0b1020;
+            border-color: #1f2937;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            border-color: #7f1d1d;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        .list {
+            display: grid;
+            gap: .5rem;
+            margin-top: .75rem;
+        }
+
+        .item {
+            display: grid;
+            gap: .6rem;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            background: #0b1020;
+            border: 1px solid #1f2937;
+            border-radius: .7rem;
+            padding: .6rem .7rem;
+        }
+
+        .pill {
+            font-size: .75rem;
+            padding: .25rem .5rem;
+            border-radius: 999px;
+            border: 1px solid #1f2937;
+            background: #0e1426;
+            color: var(--muted);
+        }
+
+        .controls {
+            display: flex;
+            gap: .5rem;
+            flex-wrap: wrap;
+        }
+
+        .timer {
+            display: grid;
+            gap: .75rem;
+            justify-items: center;
+            text-align: center;
+            padding: 1rem;
+            border-radius: .9rem;
+            border: 1px dashed #334155;
+            background: radial-gradient(1200px 400px at 50% -200px, rgba(56, 189, 248, .08), transparent 60%);
+        }
+
+        .time-face {
+            font-variant-numeric: tabular-nums;
+            font-weight: 800;
+            letter-spacing: .5px;
+            font-size: clamp(2rem, 7vw, 3.2rem);
+        }
+
+        .help {
+            border-left: 3px solid var(--accent-2);
+            padding-left: .8rem;
+        }
+
+        footer {
+            padding: 2rem 1rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 1px, 1px);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="wrap header-row" role="banner">
+            <div>
+                <h1>Student Planner</h1>
+                <p class="sub">Plan smart • Focus deep • Review & improve</p>
+            </div>
+            <div aria-live="polite">
+                <strong id="todayDate">Today</strong><br />
+                <span class="muted">Local time • Africa/Lagos</span>
+            </div>
+        </div>
+        <div class="wrap">
+            <nav aria-label="Primary">
+                <button class="tab" data-target="#plan" aria-current="page">Plan</button>
+                <button class="tab" data-target="#tasks">Tasks</button>
+                <button class="tab" data-target="#timer">Timer</button>
+                <button class="tab" data-target="#advice">Advice</button>
+                <button class="tab" data-target="#review">Review</button>
+                <button class="tab" data-target="#data">Save / Load</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <section id="plan" class="grid" aria-label="Plan Builder">
+            <article class="card">
+                <h2>Build Your Study Plan</h2>
+                <p class="muted">Set a clear goal, split it into focused blocks, and schedule smart breaks.</p>
+
+                <form id="planForm" class="row row-3" aria-describedby="planHelp">
+                    <div>
+                        <label for="planGoal">Main goal (e.g., “Functions — JUPEB Maths”)</label>
+                        <input id="planGoal" name="goal" placeholder="Your clear outcome for today" required />
+                    </div>
+                    <div>
+                        <label for="subject">Subject</label>
+                        <select id="subject" name="subject">
+                            <option>Mathematics</option>
+                            <option>Chemistry</option>
+                            <option>Physics</option>
+                            <option>English</option>
+                            <option>Computer Science</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="totalMinutes">Total minutes</label>
+                        <input id="totalMinutes" name="minutes" type="number" min="20" step="5" value="120" />
+                    </div>
+
+                    <div>
+                        <label for="blockLen">Focus block (min)</label>
+                        <input id="blockLen" name="block" type="number" min="15" step="5" value="25" />
+                    </div>
+                    <div>
+                        <label for="shortBreak">Short break (min)</label>
+                        <input id="shortBreak" name="shortBreak" type="number" min="3" step="1" value="5" />
+                    </div>
+                    <div>
+                        <label for="longBreak">Long break (min)</label>
+                        <input id="longBreak" name="longBreak" type="number" min="10" step="5" value="15" />
+                    </div>
+
+                    <div>
+                        <label for="startTime">Start time</label>
+                        <input id="startTime" name="start" type="time" />
+                    </div>
+                    <div>
+                        <label for="energy">Energy level now</label>
+                        <select id="energy" name="energy">
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="distraction">Main distraction to avoid</label>
+                        <input id="distraction" name="distraction" placeholder="e.g., phone, noise, hunger" />
+                    </div>
+
+                    <div class="row row-2" style="grid-column: 1 / -1">
+                        <button type="submit" class="btn-primary">Generate Plan</button>
+                        <button type="reset" class="btn-secondary">Clear</button>
+                    </div>
+                </form>
+
+                <p id="planHelp" class="muted help">
+                    Tip: Keep blocks short when energy is low. Batch similar tasks. Put the hardest topic in your first
+                    two blocks.
+                </p>
+            </article>
+
+            <aside class="card" aria-live="polite">
+                <h2>Today’s Schedule</h2>
+                <div id="scheduleEmpty" class="muted">No plan yet—generate one to see your timeline.</div>
+                <ol id="schedule" class="list" aria-label="Generated schedule">
+                    <!-- JS will render schedule items here -->
+                </ol>
+                <div class="controls" style="margin-top:.75rem">
+                    <button class="btn-secondary" id="btnSendToTimer" disabled>Send First Block to Timer</button>
+                    <button class="btn-secondary" id="btnCopySchedule" disabled>Copy Schedule</button>
+                </div>
+            </aside>
+        </section>
+
+        <section id="tasks" hidden aria-label="Tasks">
+            <article class="card">
+                <h2>Task List</h2>
+                <form id="taskForm" class="row row-3" aria-describedby="taskHelp">
+                    <div>
+                        <label for="taskTitle">Task</label>
+                        <input id="taskTitle" name="title" placeholder="e.g., Derivative rules practice (15 Qs)"
+                            required />
+                    </div>
+                    <div>
+                        <label for="taskPriority">Priority</label>
+                        <select id="taskPriority" name="priority">
+                            <option>High</option>
+                            <option selected>Medium</option>
+                            <option>Low</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="taskDuration">Minutes</label>
+                        <input id="taskDuration" name="minutes" type="number" min="5" step="5" value="25" />
+                    </div>
+                    <div class="row row-2" style="grid-column: 1 / -1">
+                        <button type="submit" class="btn-primary">Add Task</button>
+                        <button type="reset" class="btn-secondary">Clear</button>
+                    </div>
+                </form>
+                <p id="taskHelp" class="muted help">Rule of 3: keep a max of three “must-do” tasks for today.</p>
+
+                <div class="list" id="taskList" aria-live="polite" aria-label="Tasks">
+                    <!-- JS will render tasks -->
+                    <!-- Example static item: -->
+                    <!--
+          <div class="item">
+            <div>
+              <strong>Example Task</strong>
+              <div class="muted">25 min • <span class="pill">Medium</span></div>
+            </div>
+            <div class="controls">
+              <button class="btn-secondary">Start</button>
+              <button class="btn-danger">Delete</button>
+            </div>
+          </div>
+          -->
+                </div>
+            </article>
+        </section>
+
+        <section id="timer" hidden aria-label="Focus Timer">
+            <article class="card">
+                <h2>Focus Timer (Pomodoro)</h2>
+                <div class="row row-3" style="margin-bottom:.75rem">
+                    <div>
+                        <label for="focusLen">Focus (min)</label>
+                        <input id="focusLen" type="number" min="10" step="5" value="25" />
+                    </div>
+                    <div>
+                        <label for="breakLen">Break (min)</label>
+                        <input id="breakLen" type="number" min="3" step="1" value="5" />
+                    </div>
+                    <div>
+                        <label for="cycles">Cycles</label>
+                        <input id="cycles" type="number" min="1" step="1" value="4" />
+                    </div>
+                </div>
+
+                <div class="timer" role="group" aria-label="Timer controls">
+                    <div class="muted" id="timerStatus">Ready</div>
+                    <div class="time-face" aria-live="assertive" id="timeFace">25:00</div>
+                    <div class="controls">
+                        <button class="btn-primary" id="startTimer">Start</button>
+                        <button class="btn-secondary" id="pauseTimer" disabled>Pause</button>
+                        <button class="btn-secondary" id="resetTimer" disabled>Reset</button>
+                        <button class="btn-secondary" id="skipPhase" disabled>Skip</button>
+                    </div>
+                    <p class="muted" id="currentTaskHint">No task selected.</p>
+                </div>
+
+                <div class="row row-2" style="margin-top:1rem">
+                    <div class="card" style="padding:.8rem">
+                        <h3 style="margin-top:0">Rules for Deep Focus</h3>
+                        <ul class="muted">
+                            <li>Phone on airplane mode or in another room.</li>
+                            <li>One tab only; textbook/notes open before you start.</li>
+                            <li>Micro-commitment: “Just the next 5 minutes.”</li>
+                        </ul>
+                    </div>
+                    <div class="card" style="padding:.8rem">
+                        <h3 style="margin-top:0">Breaks That Recharge</h3>
+                        <ul class="muted">
+                            <li>Stand, stretch, sip water.</li>
+                            <li>Look far (20–20–20 rule: every 20 min, 20s at 20ft).</li>
+                            <li>No social apps—keep the brain quiet.</li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section id="advice" hidden aria-label="Advice & Guidance">
+            <article class="card">
+                <h2>Guided Study Advice</h2>
+                <details open class="card" style="padding:.8rem">
+                    <summary><strong>1) Make a plan you can actually finish</strong></summary>
+                    <p class="muted">Choose one main outcome for the session. Split it into 25–40 minute blocks. Keep a
+                        buffer of 20% time for surprises.</p>
+                </details>
+                <details class="card" style="padding:.8rem">
+                    <summary><strong>2) Sequence matters</strong></summary>
+                    <p class="muted">Do hardest topic first two blocks when willpower is highest. Practice questions
+                        before re-reading notes.</p>
+                </details>
+                <details class="card" style="padding:.8rem">
+                    <summary><strong>3) Active over passive</strong></summary>
+                    <p class="muted">Write, solve, teach out loud, use flashcards. Reading alone is slow learning.</p>
+                </details>
+                <details class="card" style="padding:.8rem">
+                    <summary><strong>4) Review loop</strong></summary>
+                    <p class="muted">End each session with a 3-minute summary and list blockers for next time.</p>
+                </details>
+                <details class="card" style="padding:.8rem">
+                    <summary><strong>5) Protect your focus</strong></summary>
+                    <p class="muted">Silence notifications. Tell people you’re in a session. Keep water/snack ready so
+                        you don’t roam.</p>
+                </details>
+            </article>
+        </section>
+
+        <section id="review" hidden aria-label="Reflection">
+            <article class="card">
+                <h2>Quick Review</h2>
+                <form id="reviewForm" class="row">
+                    <div>
+                        <label for="whatWorked">What worked well?</label>
+                        <textarea id="whatWorked"
+                            placeholder="e.g., Did questions first, used smaller blocks…"></textarea>
+                    </div>
+                    <div>
+                        <label for="whatBlocked">What blocked you?</label>
+                        <textarea id="whatBlocked"
+                            placeholder="e.g., Phone pings, unclear notes, noisy room…"></textarea>
+                    </div>
+                    <div>
+                        <label for="nextStep">Next clear step</label>
+                        <input id="nextStep" placeholder="e.g., Re-do Q5–10, watch 10min video on limits…" />
+                    </div>
+                    <div class="row row-2">
+                        <button type="submit" class="btn-primary">Save Review</button>
+                        <button type="reset" class="btn-secondary">Clear</button>
+                    </div>
+                </form>
+            </article>
+        </section>
+
+        <section id="data" hidden aria-label="Save and Load">
+            <article class="card">
+                <h2>Save / Load Your Planner</h2>
+                <div class="row row-2">
+                    <div>
+                        <label for="exportArea">Export (read-only)</label>
+                        <textarea id="exportArea" readonly
+                            placeholder="Your data will appear here when you export."></textarea>
+                        <div class="controls" style="margin-top:.5rem">
+                            <button class="btn-secondary" id="btnExport">Export Data</button>
+                            <button class="btn-secondary" id="btnCopyExport">Copy</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="importArea">Import (paste JSON)</label>
+                        <textarea id="importArea" placeholder='Paste previously exported JSON here'></textarea>
+                        <div class="controls" style="margin-top:.5rem">
+                            <button class="btn-primary" id="btnImport">Import Data</button>
+                            <button class="btn-danger" id="btnClearAll">Clear All</button>
+                        </div>
+                    </div>
+                </div>
+                <p class="muted">Your data can also be kept locally in your browser (localStorage) when we add the
+                    JavaScript.</p>
+            </article>
+        </section>
+    </main>
+
+    <footer>
+        Built for students who like momentum • © <span id="year">2025</span>
+    </footer>
+
+    <!-- Scripts placeholder: you’ll add functionality next -->
+    <script>
+        // Non-intrusive helpers so the page feels alive even before full JS:
+        (function () {
+            const d = new Date();
+            const fmt = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const today = document.getElementById('todayDate'); if (today) today.textContent = fmt;
+            const y = document.getElementById('year'); if (y) y.textContent = String(new Date().getFullYear());
+
+            // Simple tab switching (HTML-first; enhance/replace later)
+            const tabs = Array.from(document.querySelectorAll('.tab'));
+            const sections = ['#plan', '#tasks', '#timer', '#advice', '#review', '#data'].map(s => document.querySelector(s));
+            function show(id) {
+                sections.forEach(sec => sec && sec.setAttribute('hidden', ''));
+                const active = document.querySelector(id); if (active) active.removeAttribute('hidden');
+                tabs.forEach(t => t.removeAttribute('aria-current'));
+                const current = tabs.find(t => t.dataset.target === id);
+                if (current) current.setAttribute('aria-current', 'page');
+            }
+            tabs.forEach(t => t.addEventListener('click', () => show(t.dataset.target)));
+            show('#plan'); // default
+        })();
+    </script>
+</body>
+<script src="Forreel.js"></script>
+
+</html>
